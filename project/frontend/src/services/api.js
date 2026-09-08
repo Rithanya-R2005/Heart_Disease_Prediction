@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Use the Vite proxy (/api → http://localhost:8000) in development.
 // The VITE_API_URL env var can override this for production builds.
-const API_BASE_URL = import.meta.env.VITE_API_URL || '';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -61,6 +61,28 @@ export const healthAPI = {
     const response = await api.get('/api/health');
     return response.data;
   },
+
+  predictHeartDisease: async (healthData) => {
+    const response = await api.post('/api/predict', healthData);
+    return response.data;
+  },
+
+  getHistory: async () => {
+    const response = await api.get('/api/healthchecks');
+    return response.data;
+  },
+
+  getLatest: async () => {
+    const response = await api.get('/api/healthchecks/latest');
+    return response.data;
+  },
+
+  getById: async (id) => {
+    const response = await api.get(`/api/healthchecks/${id}`);
+    return response.data;
+  },
 };
+
+
 
 export default api;

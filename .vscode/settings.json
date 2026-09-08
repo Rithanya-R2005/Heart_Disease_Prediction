@@ -1,0 +1,15 @@
+{
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/Scripts/python.exe",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/project/backend",
+    "${workspaceFolder}/.venv/Lib/site-packages"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/project/backend",
+    "${workspaceFolder}/.venv/Lib/site-packages"
+  ],
+  "pyrefly.searchPaths": [
+    "${workspaceFolder}/project/backend",
+    "${workspaceFolder}/.venv/Lib/site-packages"
+  ]
+}

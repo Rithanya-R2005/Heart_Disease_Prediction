@@ -1,0 +1,6 @@
+{
+  "search-path": [
+    "project/backend",
+    ".venv/Lib/site-packages"
+  ]
+}

@@ -37,15 +37,28 @@ export const AuthProvider = ({ children }) => {
 
       if (error.response) {
         const status = error.response.status;
+        const detail = error.response.data?.detail;
+
         if (status === 401) {
-          errorMessage = 'Invalid email or password.';
+          errorMessage = typeof detail === 'string' ? detail : 'Invalid email or password.';
         } else if (status === 422) {
-          errorMessage = 'Please enter a valid email and password.';
+          if (Array.isArray(detail)) {
+            const firstError = detail[0];
+            const field = firstError?.loc?.[firstError.loc.length - 1] || 'field';
+            const msg = firstError?.msg || 'is invalid';
+            errorMessage = `Validation error: ${field} ${msg}.`;
+          } else if (typeof detail === 'string') {
+            errorMessage = detail;
+          } else {
+            errorMessage = 'Please enter a valid email and password.';
+          }
         } else if (status === 500) {
           errorMessage = 'Server error. Please try again later.';
+        } else if (typeof detail === 'string') {
+          errorMessage = detail;
         }
       } else if (error.request) {
-        errorMessage = 'Cannot reach the server. Please check your connection.';
+        errorMessage = 'Cannot connect to the server. Please make sure the backend is running.';
       }
 
       return { success: false, error: errorMessage };
@@ -91,7 +104,7 @@ export const AuthProvider = ({ children }) => {
           errorMessage = 'Server error. Please try again later.';
         }
       } else if (error.request) {
-        errorMessage = 'Cannot reach the server. Please check your connection.';
+        errorMessage = 'Cannot connect to the server. Please make sure the backend is running.';
       }
 
       return { success: false, error: errorMessage };
