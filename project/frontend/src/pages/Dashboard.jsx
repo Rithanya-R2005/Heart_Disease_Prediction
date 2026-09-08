@@ -186,6 +186,19 @@ const Dashboard = () => {
                 </div>
               </div>
 
+              {latestCheck.is_extrapolated && (
+                <div className="alert-banner alert-warning" style={{ marginTop: '20px', marginBottom: '0' }}>
+                  <span className="alert-icon">⚠️</span>
+                  <div style={{ fontSize: '14px' }}>
+                    <strong>Clinical Extrapolation Notice: </strong>
+                    <span>
+                      {latestCheck.extrapolation_note ||
+                        'Assessment age falls outside the core clinical training cohort (30–65 years). Score represents an extrapolation.'}
+                    </span>
+                  </div>
+                </div>
+              )}
+
               <div className="risk-hero-actions">
                 <button
                   onClick={() => navigate('/healthcheck')}
@@ -387,6 +400,20 @@ const Dashboard = () => {
                     <p className="modal-risk-note">Model-based probability estimate</p>
                   </div>
                 </div>
+
+                {/* Extrapolation Warning in Modal */}
+                {selectedRecord.is_extrapolated && (
+                  <div className="alert-banner alert-warning" style={{ marginBottom: '0' }}>
+                    <span className="alert-icon">⚠️</span>
+                    <div style={{ fontSize: '13px' }}>
+                      <strong>Clinical Extrapolation Notice: </strong>
+                      <span>
+                        {selectedRecord.extrapolation_note ||
+                          'Assessment age falls outside the model training cohort (30–65 years). Score represents an extrapolation.'}
+                      </span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Input Health Metrics */}
                 {selectedRecord.input_data && (

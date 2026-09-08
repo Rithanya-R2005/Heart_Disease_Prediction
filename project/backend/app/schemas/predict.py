@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator, field_validator
 from typing import List, Optional
 
 class PredictionRequest(BaseModel):
@@ -13,6 +13,38 @@ class PredictionRequest(BaseModel):
     smoke: str = Field(..., description="'Yes' or 'No'")
     alcohol: str = Field(..., description="'Yes' or 'No'")
     physical_activity: str = Field(..., description="'Yes' or 'No'")
+
+    @field_validator('gender')
+    @classmethod
+    def validate_gender(cls, v: str) -> str:
+        clean = v.strip().title()
+        if clean not in ["Male", "Female"]:
+            raise ValueError("Gender must be 'Male' or 'Female'.")
+        return clean
+
+    @field_validator('cholesterol', 'glucose')
+    @classmethod
+    def validate_levels(cls, v: str) -> str:
+        clean = v.strip().title()
+        if clean not in ["Normal", "Above Normal", "High"]:
+            raise ValueError("Must be 'Normal', 'Above Normal', or 'High'.")
+        return clean
+
+    @field_validator('smoke', 'alcohol', 'physical_activity')
+    @classmethod
+    def validate_binary(cls, v: str) -> str:
+        clean = v.strip().title()
+        if clean not in ["Yes", "No"]:
+            raise ValueError("Must be 'Yes' or 'No'.")
+        return clean
+
+    @model_validator(mode='after')
+    def validate_blood_pressure(self):
+        if self.diastolic_bp >= self.systolic_bp:
+            raise ValueError(
+                "Diastolic blood pressure must be strictly less than systolic blood pressure."
+            )
+        return self
 
 class CalculatedFeatures(BaseModel):
     bmi: float
@@ -38,7 +70,10 @@ class PredictionResponse(BaseModel):
     risk_probability: float
     risk_percentage: float
     risk_level: str
+    is_extrapolated: bool = False
+    extrapolation_note: Optional[str] = None
     calculated_features: CalculatedFeatures
     insights: List[HealthInsight]
     recommendations: List[Recommendation]
+
 

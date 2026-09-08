@@ -182,6 +182,20 @@ const HealthCheck = () => {
            ------------------------------------------------------------- */}
         {result ? (
           <div className="healthcheck-result-section fade-in">
+            {/* Clinical Extrapolation Warning Banner */}
+            {result.is_extrapolated && (
+              <div className="alert-banner alert-warning">
+                <span className="alert-icon" style={{ fontSize: '1.25rem' }}>⚠️</span>
+                <div>
+                  <strong>Clinical Extrapolation Notice: </strong>
+                  <span>
+                    {result.extrapolation_note ||
+                      'Patient age falls outside the core clinical training cohort (30–65 years). This assessment represents an out-of-distribution extrapolation and should be evaluated with added clinical discretion.'}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {/* Main Risk Overview Banner */}
             <div className={`result-overview-card risk-${result.risk_level.toLowerCase().replace(' ', '-')}`}>
               <div className="result-overview-header">

@@ -11,8 +11,10 @@ class MongoDB:
     @classmethod
     def connect(cls):
         if cls.client is None:
-            cls.client = MongoClient(os.getenv("MONGODB_URI"))
-            cls.db = cls.client[os.getenv("DATABASE_NAME")]
+            uri = os.getenv("MONGODB_URI") or "mongodb://localhost:27017"
+            db_name = os.getenv("DATABASE_NAME") or "cardiosense_db"
+            cls.client = MongoClient(uri)
+            cls.db = cls.client[db_name]
         return cls.db
 
     @classmethod

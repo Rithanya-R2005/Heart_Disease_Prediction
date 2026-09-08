@@ -30,6 +30,8 @@ def format_healthcheck_doc(doc: dict) -> dict:
         "risk_probability": doc.get("risk_probability", 0.0),
         "risk_percentage": doc.get("risk_percentage", 0.0),
         "risk_level": doc.get("risk_level", "Unknown"),
+        "is_extrapolated": doc.get("is_extrapolated", False),
+        "extrapolation_note": doc.get("extrapolation_note", None),
         "input_data": doc.get("input_data", {}),
         "calculated_features": doc.get("calculated_features", {}),
         "insights": doc.get("insights", []),

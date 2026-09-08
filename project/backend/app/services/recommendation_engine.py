@@ -1,4 +1,4 @@
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from app.schemas.predict import HealthInsight, Recommendation
 
 class RecommendationEngine:
@@ -7,11 +7,13 @@ class RecommendationEngine:
         data: Dict[str, Any],
         calculated: Dict[str, float],
         risk_probability: float,
-        risk_level: str
+        risk_level: str,
+        is_extrapolated: bool = False,
+        extrapolation_note: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Generates dynamic personalized insights and prioritized recommendations
-        based on user health inputs and model prediction results.
+        based on user health inputs, model prediction results, and extrapolation governance.
         """
         insights: List[HealthInsight] = []
         recommendations: List[Recommendation] = []
@@ -32,6 +34,18 @@ class RecommendationEngine:
         # -------------------------------------------------------------
         # 1. GENERATE PERSONALIZED HEALTH INSIGHTS
         # -------------------------------------------------------------
+
+        # Extrapolation Governance Context Insight
+        if is_extrapolated:
+            insights.append(HealthInsight(
+                category="Assessment Context",
+                title="Out-of-Cohort Model Extrapolation",
+                description=(
+                    extrapolation_note
+                    or "Patient age falls outside the primary clinical training cohort (30–65 years). Statistical risk calculations should be interpreted with clinical discretion."
+                ),
+                impact="Attention"
+            ))
 
         # Blood Pressure Insight
         if systolic >= 140 or diastolic >= 90:
@@ -120,10 +134,25 @@ class RecommendationEngine:
             ))
 
         # -------------------------------------------------------------
-        # 2. GENERATE DYNAMIC RECOMMENDATIONS
+        # 2. GENERATE PRIORITIZED ACTIONABLE RECOMMENDATIONS
         # -------------------------------------------------------------
 
-        # Overall Risk Level Primary Recommendation
+        # Extrapolation Clinical Priority
+        if is_extrapolated:
+            recommendations.append(Recommendation(
+                id=rec_id,
+                title="Prioritize Direct Clinical Evaluation",
+                description=(
+                    "Because your age falls outside the core model training cohort (30–65 years), "
+                    "prioritize comprehensive diagnostic screening (in-person lipid panel, ECG, and physician consultation) "
+                    "over automated statistical risk estimates alone."
+                ),
+                category="Clinical Guidance",
+                priority="High"
+            ))
+            rec_id += 1
+
+        # Primary Risk-Level Medical Recommendation
         if risk_level == "High Risk":
             recommendations.append(Recommendation(
                 id=rec_id,

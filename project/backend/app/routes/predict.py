@@ -9,7 +9,7 @@ from app.routes.healthchecks import format_healthcheck_doc
 router = APIRouter(prefix="/api", tags=["Prediction"])
 
 @router.post("/predict", response_model=PredictionResponse, status_code=status.HTTP_200_OK)
-async def predict_heart_disease(
+def predict_heart_disease(
     req: PredictionRequest,
     current_user: dict = Depends(get_current_user)
 ):
@@ -36,6 +36,8 @@ async def predict_heart_disease(
             "risk_probability": result["risk_probability"],
             "risk_percentage": result["risk_percentage"],
             "risk_level": result["risk_level"],
+            "is_extrapolated": result.get("is_extrapolated", False),
+            "extrapolation_note": result.get("extrapolation_note"),
             "input_data": req.model_dump(),
             "calculated_features": calculated,
             "insights": insights,

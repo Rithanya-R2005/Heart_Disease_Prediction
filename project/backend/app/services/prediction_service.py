@@ -5,6 +5,7 @@ import tensorflow as tf
 from typing import Dict, Any, Tuple
 from app.schemas.predict import PredictionRequest, PredictionResponse, CalculatedFeatures
 from app.services.recommendation_engine import RecommendationEngine
+from app.core.constants import AGE_MIN_TRAINED, AGE_MAX_TRAINED, get_age_extrapolation_note
 
 class PredictionService:
     _instance = None
@@ -57,20 +58,35 @@ class PredictionService:
 
         # 1. Map Categorical Features to exact numerical encoding used in model training
         # Gender: Female -> 1, Male -> 2
-        gender_val = 2.0 if req.gender.strip().lower() in ["male", "m", "2"] else 1.0
+        gender_clean = req.gender.strip().title()
+        if gender_clean not in ["Male", "Female"]:
+            raise ValueError(f"Unsupported gender categorical: '{req.gender}'. Expected 'Male' or 'Female'.")
+        gender_val = 2.0 if gender_clean == "Male" else 1.0
 
         # Cholesterol: Normal -> 1, Above Normal -> 2, High -> 3
-        chol_map = {"normal": 1.0, "above normal": 2.0, "high": 3.0}
-        chol_val = chol_map.get(req.cholesterol.strip().lower(), 1.0)
+        chol_map = {"Normal": 1.0, "Above Normal": 2.0, "High": 3.0}
+        chol_clean = req.cholesterol.strip().title()
+        if chol_clean not in chol_map:
+            raise ValueError(f"Unsupported cholesterol level: '{req.cholesterol}'. Expected 'Normal', 'Above Normal', or 'High'.")
+        chol_val = chol_map[chol_clean]
 
         # Glucose: Normal -> 1, Above Normal -> 2, High -> 3
-        gluc_map = {"normal": 1.0, "above normal": 2.0, "high": 3.0}
-        gluc_val = gluc_map.get(req.glucose.strip().lower(), 1.0)
+        gluc_map = {"Normal": 1.0, "Above Normal": 2.0, "High": 3.0}
+        gluc_clean = req.glucose.strip().title()
+        if gluc_clean not in gluc_map:
+            raise ValueError(f"Unsupported glucose level: '{req.glucose}'. Expected 'Normal', 'Above Normal', or 'High'.")
+        gluc_val = gluc_map[gluc_clean]
 
         # Binary features: Yes -> 1, No -> 0
-        smoke_val = 1.0 if req.smoke.strip().lower() in ["yes", "y", "true", "1"] else 0.0
-        alcohol_val = 1.0 if req.alcohol.strip().lower() in ["yes", "y", "true", "1"] else 0.0
-        active_val = 1.0 if req.physical_activity.strip().lower() in ["yes", "y", "true", "1"] else 0.0
+        binary_map = {"Yes": 1.0, "No": 0.0}
+        smoke_clean = req.smoke.strip().title()
+        alcohol_clean = req.alcohol.strip().title()
+        active_clean = req.physical_activity.strip().title()
+        if smoke_clean not in binary_map or alcohol_clean not in binary_map or active_clean not in binary_map:
+            raise ValueError("Binary lifestyle indicators must be 'Yes' or 'No'.")
+        smoke_val = binary_map[smoke_clean]
+        alcohol_val = binary_map[alcohol_clean]
+        active_val = binary_map[active_clean]
 
         # 2. Calculate Derived Features
         height_m = req.height / 100.0
@@ -121,7 +137,12 @@ class PredictionService:
         else:
             risk_level = "High Risk"
 
-        # 7. Generate Personalized Insights & Recommendations
+        # 7. Check Age Domain & Extrapolation Governance (30–65 Years)
+        age_val = float(req.age)
+        is_extrapolated = age_val < AGE_MIN_TRAINED or age_val > AGE_MAX_TRAINED
+        extrapolation_note = get_age_extrapolation_note(age_val) if is_extrapolated else None
+
+        # 8. Generate Personalized Insights & Recommendations with Extrapolation Context
         req_dict = req.model_dump()
         calculated_dict = {
             "bmi": bmi,
@@ -132,13 +153,17 @@ class PredictionService:
             data=req_dict,
             calculated=calculated_dict,
             risk_probability=risk_prob,
-            risk_level=risk_level
+            risk_level=risk_level,
+            is_extrapolated=is_extrapolated,
+            extrapolation_note=extrapolation_note
         )
 
         return {
             "risk_probability": risk_prob,
             "risk_percentage": risk_pct,
             "risk_level": risk_level,
+            "is_extrapolated": is_extrapolated,
+            "extrapolation_note": extrapolation_note,
             "calculated_features": CalculatedFeatures(**calculated_dict),
             "insights": assessment["insights"],
             "recommendations": assessment["recommendations"]
